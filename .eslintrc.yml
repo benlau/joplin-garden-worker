@@ -1,0 +1,22 @@
+env:
+  browser: true
+  commonjs: true
+  es2021: true
+  mocha: true
+extends: airbnb-base
+overrides: []
+globals:
+  it: true
+parserOptions:
+  ecmaVersion: latest
+rules:
+  quotes: [2, "double"]
+  indent: ["error", 4]
+  no-restricted-syntax: ["off", "ForOfStatement"]
+  no-await-in-loop: "off"
+  class-methods-use-this: "off"
+  no-plusplus: "off"
+  no-continue: "off"
+  no-unused-vars: ["error", { "argsIgnorePattern": "^_" }]
+  no-param-reassign: "off"
+  camelcase: "off"

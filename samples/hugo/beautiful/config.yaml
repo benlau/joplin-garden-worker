@@ -1,0 +1,7 @@
+engine: hugo
+hugoOptions:
+  outputAsFolder: true
+defaultFolder: "blog"
+stripHtmlComments: true
+includeTags:
+  - jgw-sample

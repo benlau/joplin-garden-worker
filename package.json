@@ -1,0 +1,33 @@
+{
+  "name": "joplin-garden-worker",
+  "version": "0.0.1",
+  "description": "",
+  "main": "./src/jgw.js",
+  "bin": {
+    "jgw": "./src/jgw.js"
+  },
+  "scripts": {
+    "test": "mocha tests/*.test.js",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^9.4.1",
+    "shelljs": "^0.8.5",
+    "sinon": "^14.0.1",
+    "slug": "^8.2.2",
+    "slugify": "^1.6.5",
+    "strip-html-comments": "^1.0.0",
+    "yaml": "^2.1.2"
+  },
+  "devDependencies": {
+    "chai": "^4.3.6",
+    "eslint": "^8.25.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "mocha": "^10.0.0",
+    "npm-watch": "^0.11.0"
+  }
+}
