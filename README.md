@@ -18,6 +18,24 @@ Demo sites:
 2. Build a website of books 
 3. Update the markdown document inside a software project
 
+# Concept
+You need to prepare a project folder with config files to describe what kind of notes will be exported and how it renders the content. 
+
+In case you are using the Hugo engine, the flow could be illustrated in the below diagram:
+
+The flow (Hugo):
+
+```mermaid
+graph LR
+Joplin --> ProjectFolder(<u>Project Folder</u> <br/>config.yaml<br/>metadata.yaml)
+ProjectFolder --jgw export--> SiteFolder(<u>SiteFolder</u><br/>contents/**/TITLE/index.md)
+SiteFolder --hugo--> StaticSite
+```
+
+The Joplin Garden Worker does not provide any pre-built Hugo theme. You are free to choose the theme you like and customize the generation process. 
+
+You could find a demo at: [Unlimited Build Works](https://benlau.github.io/)
+
 # Installation
 
 ```bash
@@ -41,7 +59,7 @@ A sample config for building a Hugo website is available at `samples/hugo`. You 
 Preparation:
 
 ```bash
-cd samples/hugo/beautiful
+cd samples/hugo/beautiful/site
 git clone https://github.com/halogenica/beautifulhugo.git themes/beautifulhugo
 ```
 
@@ -56,7 +74,7 @@ $ cd samples/hugo/beautiful
 $ jgw auth 
 ```
 
-And then you should launch Joplin and it will show a dialog to ask to grant permission for the request if you have web clipper enabled. ([Joplin Web Clipper | Joplin](https://joplinapp.org/clipper/)). Accept the request then it will write a `.auth` file to store the API . If you holding the project inside a version control system like git. Please don't commit this file.
+And then you should switch to Joplin and it will show a dialog to ask to grant permission for the request if you have web clipper enabled. ([Joplin Web Clipper | Joplin](https://joplinapp.org/clipper/)). Accept the request then it will write a `.auth` file to store the API . If you holding the project inside a version control system like git. Please don't commit this file.
 
 ## Export the site
 
@@ -74,7 +92,7 @@ $ cd samples/hugo/beautiful/site
 hugo server -w
 ```
 
-Open the http://localhost:1313 in your browser. It should show a digital garden with notes exported from your Joplin. 
+Open the http://localhost:1313/blog in your browser. It should show a web site with notes exported from your Joplin inside the blog section. 
 
 ## Advanced Usage
 
@@ -88,15 +106,6 @@ The document is incomplete. In case you need a feature not mentioned in this REA
 # Configuration
 
 The Joplin Garden Worker supports exporting a site and customizing the generation process. It needs to hold the configuration and script inside a project folder.
-
-The flow (Hugo):
-
-```mermaid
-graph LR
-Joplin --> ProjectFolder(<u>Project Folder</u> <br/>config.yaml<br/>metadata.yaml)
-ProjectFolder --jgw export--> SiteFolder(<u>SiteFolder</u><br/>contents/**/TITLE/index.md)
-SiteFolder --hugo--> StaticSite
-```
 
 Each project should contain at least 3 files:
 

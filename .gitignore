@@ -1,11 +1,5 @@
 node_modules
 .DS_Store
-samples/hugo/universal/metadata.yaml
-samples/hugo/universal/site/themes
-samples/hugo/universal/site/content
-samples/hugo/universal/site/resources
-samples/hugo/universal/site/static
-
 samples/hugo/beautiful/metadata.yaml
 samples/hugo/beautiful/site/themes
 samples/hugo/beautiful/site/content
