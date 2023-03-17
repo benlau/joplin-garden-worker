@@ -180,14 +180,14 @@ class JoplinDataService {
 
     async getTagId(input) {
         const tag = input.trim().toLowerCase();
-        const tags = await this.getTags();
+        const tags = await this.readTags();
         const item = tags.find((value) => value.title === tag);
         return item?.id;
     }
 
     async getOrCreateTag(input) {
         const tag = input.trim().toLowerCase();
-        const tags = await this.getTags();
+        const tags = await this.readTags();
         const item = tags.find((value) => value.title.toLowerCase() === tag);
         if (item !== undefined) {
             return item.id;
@@ -348,7 +348,7 @@ class JoplinDataService {
     }
 
     async getNotesByTag(tagName) {
-        const tagInfoList = await this.getTags();
+        const tagInfoList = await this.readTags();
         const tagInfo = tagInfoList.find((tag) => tag.title === tagName);
         if (tagInfo === undefined) {
             return [];
