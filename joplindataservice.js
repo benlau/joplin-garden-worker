@@ -9,18 +9,8 @@ function hasValue(value) {
     return !hasNoValue(value);
 }
 
-async function sha256(message) {
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function sleep(ms) {
-    await new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}
+/* The JoplinDataService provides an CRUD interface
+   to access the Joplin Restul API Service */
 
 class JoplinDataService {
     static ApiToken = "apiToken";
@@ -32,15 +22,14 @@ class JoplinDataService {
     constructor(storageService) {
         this.apiToken = undefined;
         this.apiUrl = "http://localhost:41184";
-        this.authToken = undefined;
         this.storageService = storageService;
     }
 
     async load() {
-        this.apiToken = await this.storageService.get(JoplinDataService.ApiToken);
-        this.authToken = await this.storageService.get(JoplinDataService.AuthToken);
+        this.apiToken = await this.storageService.apiToken;
     }
 
+    // wrapper of fetch() with exception handling
     async fetchData(url, options, body) {
         try {
             return await fetch(url, options, body);
@@ -58,47 +47,19 @@ class JoplinDataService {
             method: "POST",
         });
         const json = await response.json();
-        this.authToken = json.auth_token;
-        await this.storageService.set(JoplinDataService.AuthToken, this.authToken);
+        return json.auth_token;
+    }
+
+    async checkAuthToken(authToken) {
+        const url = `${this.apiUrl}/auth/check?auth_token=${authToken}`;
+        const response = await this.fetchData(url, {
+            method: "GET",
+        });
+        return response;
     }
 
     isAuthorized() {
         return hasValue(this.apiToken);
-    }
-
-    async requestPermission() {
-        if (hasValue(this.apiToken)) {
-            return;
-        }
-
-        if (hasNoValue(this.authToken)) {
-            await this.requestAuthToken();
-        }
-
-        while (hasNoValue(this.apiToken)) {
-            const url = `${this.apiUrl}/auth/check?auth_token=${this.authToken}`;
-            const response = await this.fetchData(url, {
-                method: "GET",
-            });
-            if (response.status === 500) {
-                await this.requestAuthToken();
-                continue;
-            }
-            const json = await response.json();
-            const {
-                status,
-                token,
-            } = json;
-            if (status === "accepted") {
-                this.apiToken = token;
-                this.authToken = undefined;
-                this.storageService.set(JoplinDataService.ApiToken, this.apiToken);
-                this.storageService.set(JoplinDataService.AuthToken, this.authToken);
-            } else if (status === "rejected") {
-                await this.requestAuthToken();
-            }
-            await sleep(500);
-        }
     }
 
     async getNote(id) {
@@ -125,14 +86,16 @@ class JoplinDataService {
         return response.json();
     }
 
-    async createNote(id, parentId, title, body) {
+    async createNote(id, parentId, title, body, options = {}) {
         const url = `${this.apiUrl}/notes?token=${this.apiToken}`;
         const data = {
             id,
             title,
             body,
             parent_id: parentId,
+            ...options,
         };
+
         const response = await this.fetchData(url, {
             method: "POST",
             headers: {
@@ -186,6 +149,7 @@ class JoplinDataService {
         return response.json();
     }
 
+    /* Deprecated API. Use readTags instead */
     async getTags() {
         const url = `${this.apiUrl}/tags/?token=${this.apiToken}`;
         const response = await this.fetchData(url, {
@@ -196,6 +160,22 @@ class JoplinDataService {
         }
         const json = await response.json();
         return json.items;
+    }
+
+    async readTags() {
+        const query = this.readAll(async (page) => {
+            const url = `${this.apiUrl}/tags?token=${this.apiToken}&page=${page}`;
+            const response = await this.fetchData(url, {
+                method: "GET",
+            });
+            return response.json();
+        });
+
+        let items = [];
+        for await (const result of query) {
+            items = items.concat(result.items);
+        }
+        return items;
     }
 
     async getTagId(input) {
@@ -257,6 +237,29 @@ class JoplinDataService {
          */
     }
 
+    /* Read notebooks in an unsorted array */
+    async readNotebooks() {
+        const query = this.readAll(async (page) => {
+            const url = `${this.apiUrl}/folders?token=${this.apiToken}&page=${page}`;
+            const response = await this.fetchData(url, {
+                method: "GET",
+            });
+            return response.json();
+        });
+
+        let items = [];
+        for await (const result of query) {
+            items = items.concat(result.items);
+        }
+        return items;
+    }
+
+    /* Get all notebooks sorted accroding to its
+       folder structure.
+
+       @deprecated
+     */
+
     async getNotebooks() {
         const url = `${this.apiUrl}/folders?token=${this.apiToken}`;
         const response = await this.fetchData(url, {
@@ -295,6 +298,7 @@ class JoplinDataService {
         };
         travel(tree);
 
+        // #FIXME
         const storedNotebookId = await this.storageService.get(
             JoplinDataService.SelectedNotebookId,
         );
@@ -304,10 +308,6 @@ class JoplinDataService {
             notebooks: sortedNotebooks,
             selectedNotebookId,
         };
-    }
-
-    async urlToId(url) {
-        return (await sha256(url)).slice(0, 32);
     }
 
     async searchNotes(keyword) {
@@ -332,7 +332,7 @@ class JoplinDataService {
         return items;
     }
 
-    async* query(callback) {
+    async* readAll(callback) {
         let hasMore = true;
         let page = 1;
 
@@ -357,7 +357,7 @@ class JoplinDataService {
     }
 
     async getNotesByTagId(tagId) {
-        const query = this.query(async (page) => {
+        const query = this.readAll(async (page) => {
             const url = `${this.apiUrl}/tags/${tagId}/notes?token=${this.apiToken}&page=${page}`;
             const response = await this.fetchData(url, {
                 method: "GET",
@@ -372,7 +372,7 @@ class JoplinDataService {
         return items;
     }
 
-    async queryResourceInfo(id) {
+    async readResourceInfo(id) {
         const url = `${this.apiUrl}/resources/${id}?token=${this.apiToken}`;
         const response = await this.fetchData(url, {
             method: "GET",
@@ -380,13 +380,24 @@ class JoplinDataService {
         return response.json();
     }
 
-    async queryResourceFile(id) {
+    async readResourceFile(id) {
         const url = `${this.apiUrl}/resources/${id}/file/?token=${this.apiToken}`;
         const response = await this.fetchData(url, {
             method: "GET",
         });
 
         return response.blob();
+    }
+
+    async readAllNotes(fields = ["id", "title"]) {
+        const fieldsArg = fields.join(",");
+        return this.readAll(async (page) => {
+            const url = `${this.apiUrl}/notes?token=${this.apiToken}&page=${page}&fields=${fieldsArg}`;
+            const response = await this.fetchData(url, {
+                method: "GET",
+            });
+            return response.json();
+        });
     }
 }
 
