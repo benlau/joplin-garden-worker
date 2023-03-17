@@ -8,11 +8,15 @@ const NoteParserService = require("./services/noteparserservice");
 const FileRepo = require("./services/filerepo");
 const LinkService = require("./services/linkservice");
 const EngineService = require("./services/engineservice");
+const MemoService = require("./lib/joplinapi/memoservice");
+const CryptoRepo = require("./lib/joplinapi/nodecryptorepo");
 
-const storageService = new StorageService();
-const joplinDataService = new JoplinDataService(storageService);
 const linkService = new LinkService();
 const fileRepo = new FileRepo();
+const storageService = new StorageService(fileRepo);
+const joplinDataService = new JoplinDataService(storageService);
+const cryptoRepo = new CryptoRepo();
+const memoService = new MemoService({ joplinDataService, cryptoRepo, storageService });
 
 async function auth() {
     storageService.load();
@@ -21,7 +25,7 @@ async function auth() {
     if (!joplinDataService.isAuthorized()) {
         // eslint-disable-next-line
         console.info("Please open Joplin to grant permission to access the data.");
-        await joplinDataService.requestPermission();
+        await memoService.requestPermission();
         storageService.save();
         // eslint-disable-next-line
         console.info("Authorization successful.");
