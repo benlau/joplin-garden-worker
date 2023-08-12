@@ -215,6 +215,9 @@ class Hugo {
                 }
 
                 const target = gardenService.getNoteInfo(linkId);
+                if (target === undefined) {
+                    return title;
+                }
                 const newLink = `[${title}]({{< ref "${this.genLink(target)}" >}})`;
                 return newLink;
             },

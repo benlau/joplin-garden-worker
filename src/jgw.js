@@ -124,7 +124,7 @@ async function run(outputDir, exportNote) {
         );
 
         await Promise.all(resources.map(async (resource) => {
-            const blob = await joplinDataService.queryResourceFile(resource.id);
+            const blob = await joplinDataService.readResourceFile(resource.id);
             return engine.exportResource(blob, resource);
         }));
         exportedResource += resources.length;

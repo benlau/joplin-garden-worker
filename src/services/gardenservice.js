@@ -38,7 +38,7 @@ class GardenService {
 
         if (!this.resources.has(id)) {
             try {
-                const resource = await joplinDataService.queryResourceInfo(id);
+                const resource = await joplinDataService.readResourceInfo(id);
                 if (resource !== undefined && resource.error === undefined) {
                     this.resources.set(id, resource);
                 }
